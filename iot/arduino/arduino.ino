@@ -13,27 +13,26 @@ int pos;
 int limits[2] = {30,150};
 byte inByte;
 
-void setup() 
-{ 
+void setup()
+{
   pinMode(0, OUTPUT);
 
-  myservo.attach(0);  
+  myservo.attach(0);
   myservo.setMaximumPulse(2200);
   serial.begin(9600);
+  pos = limits[0] + ((limits[1] - limits[0]) / 2);
+  myservo.write(pos);
+}
 
-  myservo.write((limits[1]-limits[0])/2);
-  pos = 90;
-} 
-
-void loop() 
+void loop()
 {
-  while(serial.available() && 
+  while(serial.available() &&
           (inByte = serial.read()) != '\n') {
       int p = (int) inByte;
       pos = p >= limits[0] && p <= limits[1] ? p : pos;
   }
-  
+
   myservo.write(pos);
   delay(REFRESH_PERIOD_MS);
   SoftRcPulseOut::refresh(NOW);
-} 
+}
