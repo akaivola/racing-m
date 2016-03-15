@@ -1,0 +1,10 @@
+{
+  "name": "HelloWorld",
+  "interface": "reagent",
+  "androidHost": "10.0.3.2",
+  "iosHost": "localhost",
+  "modules": ["react-native-slider"],
+  "imageDirs": [
+    "images"
+  ]
+}
