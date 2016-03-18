@@ -1,3 +1,4 @@
+// digispark servo controller code
 #include <SoftSerial.h>
 #include <SoftRcPulseOut.h>
 
