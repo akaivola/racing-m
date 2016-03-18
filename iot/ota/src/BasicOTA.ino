@@ -2,13 +2,20 @@
 #include <ESP8266mDNS.h>
 #include <WiFiUdp.h>
 #include <ArduinoOTA.h>
+#include <Test.h>
+
+#include <WebSocketsServer.h>
+#include <Hash.h>
+
+#include <ArduinoJson.h>
+
+WebSocketsServer webSocket = WebSocketsServer(8080);
 
 const char* ssid = "";
 const char* password = "";
+Test test;
 
-void setup() {
-  Serial.begin(115200);
-  Serial.println("Booting");
+void setupOTA() {
   WiFi.mode(WIFI_STA);
   WiFi.begin(ssid, password);
   while (WiFi.waitForConnectResult() != WL_CONNECTED) {
@@ -49,6 +56,53 @@ void setup() {
   Serial.println(WiFi.localIP());
 }
 
+String parseJson(char * unparsedJson) {
+  Serial.println(unparsedJson);
+  StaticJsonBuffer<100> jsonBuffer;
+  JsonObject& root = jsonBuffer.parseObject(unparsedJson);
+  // const char * jotain = root["jotain"];
+  if (root.success())
+    return "ok";
+  else {
+    return "ko";
+  }
+}
+
+void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length) {
+
+  switch(type) {
+    case WStype_DISCONNECTED:
+      Serial.printf("[%u] Disconnected!\n", num);
+      break;
+    case WStype_CONNECTED:
+      webSocket.sendTXT(num, "Connected");
+      break;
+    case WStype_TEXT:
+      webSocket.sendTXT(num, "received: " + parseJson((char *) payload));
+      // send data to all connected clients
+      // webSocket.broadcastTXT("message here");
+      break;
+    case WStype_BIN:
+      //Serial.printf("[%u] get binary lenght: %u\n", num, length);
+      //hexdump(payload, length);
+
+      // send message to client
+      // webSocket.sendBIN(num, payload, lenght);
+      break;
+  }
+}
+
+void setup() {
+  Serial.begin(9600);
+  Serial.println("INIT");
+  setupOTA();
+  //test.setup();
+  webSocket.begin();
+  webSocket.onEvent(webSocketEvent);
+}
+
 void loop() {
   ArduinoOTA.handle();
+  webSocket.loop();
+  //test.loop();
 }
