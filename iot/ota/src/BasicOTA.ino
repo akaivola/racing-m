@@ -2,18 +2,15 @@
 #include <ESP8266mDNS.h>
 #include <WiFiUdp.h>
 #include <ArduinoOTA.h>
-#include "Test.h"
+#include "SerialServo.h"
+#include "WebSocket.h"
+#include <functional>
+#include <sstream>
 
-#include <WebSocketsServer.h>
-#include <Hash.h>
-
-#include <ArduinoJson.h>
-
-WebSocketsServer webSocket = WebSocketsServer(8080);
-
-const char* ssid = "";
-const char* password = "";
-Test test;
+const char* ssid = "4G-Gateway-8EA8";
+const char* password = "FJ320M36723";
+WebSocket* ws;
+SerialServo* servo;
 
 void setupOTA() {
   WiFi.mode(WIFI_STA);
@@ -56,53 +53,23 @@ void setupOTA() {
   Serial.println(WiFi.localIP());
 }
 
-String parseJson(char * unparsedJson) {
-  Serial.println(unparsedJson);
-  StaticJsonBuffer<100> jsonBuffer;
-  JsonObject& root = jsonBuffer.parseObject(unparsedJson);
-  // const char * jotain = root["jotain"];
-  if (root.success())
-    return "ok";
-  else {
-    return "ko";
-  }
-}
-
-void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length) {
-
-  switch(type) {
-    case WStype_DISCONNECTED:
-      Serial.printf("[%u] Disconnected!\n", num);
-      break;
-    case WStype_CONNECTED:
-      webSocket.sendTXT(num, "Connected");
-      break;
-    case WStype_TEXT:
-      webSocket.sendTXT(num, "received: " + parseJson((char *) payload));
-      // send data to all connected clients
-      // webSocket.broadcastTXT("message here");
-      break;
-    case WStype_BIN:
-      //Serial.printf("[%u] get binary lenght: %u\n", num, length);
-      //hexdump(payload, length);
-
-      // send message to client
-      // webSocket.sendBIN(num, payload, lenght);
-      break;
-  }
-}
-
 void setup() {
   Serial.begin(9600);
   Serial.println("INIT");
   setupOTA();
+  servo = new SerialServo();
+  ws = new WebSocket(8080, [](JsonObject& root) {
+    int pos = atoi(root["wheels"]);
+    if (pos > 0) {
+      Serial.write(pos);
+      Serial.write('\n');
+      Serial.flush();
+    }
+  });
   //test.setup();
-  webSocket.begin();
-  webSocket.onEvent(webSocketEvent);
 }
 
 void loop() {
   ArduinoOTA.handle();
-  webSocket.loop();
-  //test.loop();
+  ws->handle();
 }

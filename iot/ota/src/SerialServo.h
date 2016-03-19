@@ -1,8 +1,8 @@
 #include <Arduino.h>
 
-class Test {
+class SerialServo {
  public:
-  Test();
+  SerialServo();
   void setup();
-  void loop();
+  void write(int pos);
 };

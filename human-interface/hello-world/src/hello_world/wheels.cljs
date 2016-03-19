@@ -23,7 +23,7 @@
     {:raw begin-state
      :min min
      :max max
-     :zero begin-state})) 
+     :zero begin-state}))
 
 ;;; SUBS
 

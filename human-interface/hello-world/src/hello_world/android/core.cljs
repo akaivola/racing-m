@@ -1,12 +1,15 @@
 (ns hello-world.android.core
+  (:require-macros
+   [cljs.core.async.macros :refer [go go-loop]])
   (:require [reagent.core :as r :refer [atom]]
             [re-frame.core :refer [subscribe dispatch dispatch-sync]]
+            [cljs.core.async :refer [<! timeout]]
             [hello-world.handlers]
             [hello-world.subs]
-            [taoensso.timbre :refer-macros [spy]]))
+            [taoensso.timbre :refer-macros [spy info debug]]))
 
 (set! js/React (js/require "react-native"))
-(def slider (r/adapt-react-class (spy (js/require "react-native-slider"))))
+(def slider (r/adapt-react-class (js/require "react-native-slider")))
 
 (def app-registry (.-AppRegistry js/React))
 (def text (r/adapt-react-class (.-Text js/React)))
@@ -21,7 +24,13 @@
   (.alert (.-Alert js/React) title))
 
 (defn endpoint []
-  (let [endpoint (subscribe [:get-state :net :endpoint])]
+  (let [endpoint (subscribe [:get-state :net :endpoint])
+        wheels-raw (subscribe [:get-state :wheels :raw])
+        endpoint-answer (subscribe [:send-websocket] [wheels-raw])
+        message (subscribe [:get-state :net :message])
+        socket-open? (subscribe [:get-state :net :open])
+        reason (subscribe [:get-state :net :close :reason])
+        ready-state (subscribe [:get-state :net :ready-state])]
     (fn []
       [view {:style {:flex-direction "column" :align-items "center"}}
        [input {:style {:height 40
@@ -30,13 +39,21 @@
                :default-value @endpoint
                :placeholder "NodeMCU endpoint"
                :keyboard-type "url"
-               :on-change-text #(dispatch-sync [:set-state [:net :endpoint-edit] %])
-               :on-end-editing #(dispatch-sync [:update-state
-                                                (fn [state]
-                                                  (-> (assoc-in state
-                                                                [:net :endpoint]
-                                                                (-> state :net :endpoint-edit))
-                                                      (update-in [:net] dissoc :endpoint-edit)))])}]])))
+               :on-change-text #(dispatch-sync [:set-state [:net :endpoint-edit] (or % @endpoint)])
+               :on-end-editing #(do (dispatch-sync [:update-state
+                                                    (fn [state]
+                                                      (-> (assoc-in state
+                                                                    [:net :endpoint]
+                                                                    (-> state :net :endpoint-edit))))])
+                                    (dispatch [:init-websocket])
+                                    (dispatch [:update-readystate]))}]
+       [text
+        (str "Messages sent: " @endpoint-answer)
+        " | Opened: " (str @socket-open?)
+        " | Message: " (or (not-empty (str @message))
+                           "<none>")
+        " | ready-state: " (name (or @ready-state :error))]
+       [text (str @reason)]])))
 
 (defn wheels []
   (let [wheels-position     (subscribe [:wheels/position])
@@ -71,6 +88,24 @@
      [endpoint]
      [wheels]]))
 
+(defn loops []
+  (go-loop []
+    (let [readystate (subscribe [:get-state :net :ready-state])
+          answer? (subscribe [:send-websocket] [(subscribe [:get-state :wheels :raw])])]
+      (when (and (some? readystate) (some? answer?))
+        (case @readystate
+          :closed (dispatch [:init-websocket])
+          :open (when-not @answer?
+                  (do
+                    (info "reinitializing dropped connection")
+                    (dispatch [:init-websocket])))
+          nil))
+      (<! (timeout 1000))
+      #_(dispatch [:update-readystate]))
+    (recur)))
+
 (defn init []
   (dispatch-sync [:initialize-db])
+  (loops)
+  (dispatch [:init-websocket])
   (.registerComponent app-registry "HelloWorld" #(r/reactify-component app-root)))
