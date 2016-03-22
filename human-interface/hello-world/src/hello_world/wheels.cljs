@@ -17,13 +17,14 @@
       (+ min)))
 
 (def initial-state
-  (let [min 30
-        max 150
-        begin-state (halfway min max)]
+  (let [min 120
+        max 60
+        begin-state (halfway max min)]
     {:raw begin-state
      :min min
      :max max
-     :zero begin-state}))
+     :zero begin-state
+     :reverse true}))
 
 ;;; SUBS
 

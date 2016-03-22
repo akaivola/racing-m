@@ -6,7 +6,10 @@
             [cljs.core.async :refer [<! timeout]]
             [hello-world.handlers]
             [hello-world.subs]
-            [taoensso.timbre :refer-macros [spy info debug]]))
+            [hello-world.wheels]
+            [hello-world.throttle]
+            [hello-world.comms :as comms]
+            [taoensso.timbre :refer-macros [spy info warn debug]]))
 
 (set! js/React (js/require "react-native"))
 (def slider (r/adapt-react-class (js/require "react-native-slider")))
@@ -26,7 +29,8 @@
 (defn endpoint []
   (let [endpoint (subscribe [:get-state :net :endpoint])
         wheels-raw (subscribe [:get-state :wheels :raw])
-        endpoint-answer (subscribe [:send-websocket] [wheels-raw])
+        speed (subscribe [:get-state :throttle :speed])
+        endpoint-answer (subscribe [:send-websocket] [wheels-raw speed])
         message (subscribe [:get-state :net :message])
         socket-open? (subscribe [:get-state :net :open])
         reason (subscribe [:get-state :net :close :reason])
@@ -61,8 +65,8 @@
         min                 (subscribe [:get-state :wheels :min])
         max                 (subscribe [:get-state :wheels :max])]
     (fn []
-      [view {:style {:flex-direction "column" :margin 40 :align-items "center"}}
-       [text {:style {:font-weight "bold"}} "Wheel angle " @wheels-position]
+      [view {:style {:flex-direction "column" :margin 20 :align-items "center"}}
+       [text {:style {:font-weight "bold"}} "Wheel angle " (* -1 @wheels-position)]
        [text {:style {:font-weight "bold"}} "Raw angle " @wheels-raw-position]
 
        [slider {:style {:width 240
@@ -73,9 +77,24 @@
                 :on-value-change #(dispatch-sync [:wheels/update-raw (Math/floor %)])
                 :step 1
                 :value @wheels-raw-position}]
-       [touchable-highlight {:style {:background-color "#999" :padding 10 :border-radius 5}
-                             :on-press #(dispatch-sync [:wheels/zero])}
-        [text {:style {:text-align "center" :font-weight "bold"}} "Zero position"]]])))
+       ])))
+
+(defn throttle []
+  (let [speed (subscribe [:get-state :throttle :speed])
+        min   (subscribe [:get-state :throttle :min])
+        max   (subscribe [:get-state :throttle :max])]
+    (fn []
+      [view {:style {:flex-direction "column" :margin 20 :align-items "center"}}
+       [text {:style {:font-weight "bold"}} "Speed " (- @speed 1023)]
+       [slider {:style {:width 240
+                        :height 30
+                        :margin 10}
+                :minimum-value @min
+                :maximum-value @max
+                :on-value-change #(dispatch-sync [:throttle/set (Math/floor %)])
+                :step 1
+                :value @speed}]
+       ])))
 
 (defn app-root []
   (fn []
@@ -86,22 +105,34 @@
              :style  {:width 40 :height 40 :margin-bottom 20}}]
 
      [endpoint]
-     [wheels]]))
+     [throttle]
+     [wheels]
+     [view  {:style {:flex-direction "row"}}
+      [touchable-highlight {:style {:background-color "#999" :padding 10 :border-radius 5}
+                            :on-press #(dispatch-sync [:init-websocket])}
+       [text {:style {:text-align "center" :font-weight "bold"}}
+        "Reconnect"]]]]))
 
 (defn loops []
   (go-loop []
-    (let [readystate (subscribe [:get-state :net :ready-state])
-          answer? (subscribe [:send-websocket] [(subscribe [:get-state :wheels :raw])])]
-      (when (and (some? readystate) (some? answer?))
+    (let [readystate (subscribe [:get-state :net :ready-state])]
+      (when (some? readystate)
         (case @readystate
-          :closed (dispatch [:init-websocket])
-          :open (when-not @answer?
-                  (do
-                    (info "reinitializing dropped connection")
-                    (dispatch [:init-websocket])))
+          :closed  (dispatch [:init-websocket])
           nil))
-      (<! (timeout 1000))
-      #_(dispatch [:update-readystate]))
+      (<! (timeout 100))
+      (dispatch [:update-readystate]))
+    (recur))
+  (go-loop []
+    (let [message (<! comms/messages)
+          ws (subscribe [:get-state :net :ws])]
+      (try
+        (some->> message
+                 (clj->js)
+                 (.stringify js/JSON)
+                 (.send @ws))
+        (catch :default e (warn e)))
+      (<! (timeout 50)))
     (recur)))
 
 (defn init []

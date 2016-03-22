@@ -3,6 +3,7 @@
     [re-frame.core :refer [register-handler after subscribe dispatch dispatch-sync]]
     [schema.core :as s :include-macros true]
     [hello-world.wheels :as wheels]
+    [hello-world.throttle :as throttle]
     [hello-world.db :refer [app-db schema]]
     [taoensso.timbre :refer-macros [spy info]]))
 
@@ -21,7 +22,8 @@
     (assoc
      app-db
      :wheels wheels/initial-state
-     :net {:endpoint "ws://192.168.8.103:8080"
+     :throttle throttle/initial-state
+     :net {:endpoint "ws://192.168.8.102:8080"
            :open false
            :error nil
            :message nil
@@ -57,6 +59,9 @@
                   (set! (.-onopen ws)
                         (fn []
                           (do
+                            (dispatch-sync [:wheels/update-raw 90])
+                            (dispatch-sync [:wheels/zero])
+                            (dispatch-sync [:throttle/zero])
                             (dispatch-sync [:set-state [:net :error] nil])
                             (dispatch-sync [:set-state [:net :close] nil])
                             (dispatch-sync [:set-state [:net :open] true]))))
