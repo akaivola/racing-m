@@ -2,7 +2,6 @@
 #include <ESP8266mDNS.h>
 #include <WiFiUdp.h>
 #include <ArduinoOTA.h>
-#include "SerialServo.h"
 #include "WebSocket.h"
 #include <functional>
 #include <sstream>
@@ -10,7 +9,6 @@
 const char* ssid = "4G-Gateway-8EA8";
 const char* password = "FJ320M36723";
 WebSocket* ws;
-SerialServo* servo;
 
 void setupOTA() {
   WiFi.mode(WIFI_STA);
@@ -53,23 +51,34 @@ void setupOTA() {
   Serial.println(WiFi.localIP());
 }
 
+void setupMotor() {
+  pinMode(0, OUTPUT);
+  pinMode(5, OUTPUT);
+  analogWrite(5, 0);
+  digitalWrite(0, LOW);
+}
+
+void setMotor(int pin, int speed) {
+  analogWrite(pin, speed);
+}
+
 void setup() {
-  Serial.begin(9600);
-  Serial.println("INIT");
+  Serial.begin(4800);
+  setupMotor();
   setupOTA();
-  servo = new SerialServo();
   ws = new WebSocket(8080, [](JsonObject& root) {
-    int pos = atoi(root["wheels"]);
+    const int pos = atoi(root["wheels"]);
     if (pos > 0) {
       Serial.write(pos);
-      Serial.write('\n');
       Serial.flush();
     }
+    const int speed = atoi(root["speed"]) - 1023;
+    digitalWrite(0, speed < 0 ? HIGH : LOW);
+    setMotor(5, abs(speed));
   });
-  //test.setup();
 }
 
 void loop() {
-  ArduinoOTA.handle();
   ws->handle();
+  ArduinoOTA.handle();
 }

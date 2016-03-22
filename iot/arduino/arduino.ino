@@ -10,8 +10,8 @@
 SoftSerial serial = SoftSerial(1,2);
 
 SoftRcPulseOut myservo;
-int pos;
-int limits[2] = {30,150};
+int pos = 90;
+int limits[2] = {60,120};
 byte inByte;
 
 void setup()
@@ -20,19 +20,16 @@ void setup()
 
   myservo.attach(0);
   myservo.setMaximumPulse(2200);
-  serial.begin(9600);
+  serial.begin(4800);
   pos = limits[0] + ((limits[1] - limits[0]) / 2);
   myservo.write(pos);
 }
 
 void loop()
 {
-  while(serial.available() &&
-          (inByte = serial.read()) != '\n') {
-      int p = (int) inByte;
-      pos = p >= limits[0] && p <= limits[1] ? p : pos;
-  }
-
+  int p = (int) serial.read();
+  pos = p >= limits[0] && p <= limits[1] ? p : pos;
+  serial.println(pos);
   myservo.write(pos);
   delay(REFRESH_PERIOD_MS);
   SoftRcPulseOut::refresh(NOW);
