@@ -1,0 +1,16 @@
+{
+  "name": "Controller",
+  "interface": "reagent",
+  "androidHost": "10.0.3.2",
+  "modules": [
+    "react-native-slider"
+  ],
+  "imageDirs": [
+    "images"
+  ],
+  "iosHost": "localhost",
+  "envRoots": {
+    "dev": "env/dev",
+    "prod": "env/prod"
+  }
+}
