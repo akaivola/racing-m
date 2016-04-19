@@ -4,7 +4,7 @@
   "androidHost": "10.0.3.2",
   "modules": [
     "react-native-slider",
-    "react-native-motion-manager"
+    "react-native-sensor-manager"
   ],
   "imageDirs": [
     "images"
