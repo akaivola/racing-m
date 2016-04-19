@@ -19,7 +19,7 @@
            ready-state (get-in @db [:net :ready-state])]
        (if (and open? (not error?) (some? ws) (= :open ready-state))
          (do
-           (comms/enqueue-message (spy {:wheels wheels-position
-                                        :speed speed}))
+           (comms/enqueue-message {:wheels wheels-position
+                                   :speed  speed})
            (reaction true))
          (reaction false))))))

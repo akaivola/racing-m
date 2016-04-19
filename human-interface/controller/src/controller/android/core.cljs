@@ -6,7 +6,7 @@
             [cljs.core.async :refer [<! timeout]]
             [controller.handlers]
             [controller.subs]
-            [controller.wheels]
+            [controller.wheels :as wheels]
             [controller.throttle]
             [controller.comms :as comms]
             [taoensso.timbre :refer-macros [spy info warn debug]]))
