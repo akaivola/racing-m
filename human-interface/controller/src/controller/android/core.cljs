@@ -60,6 +60,18 @@
         " | ready-state: " (name (or @ready-state :error))]
        [text (str @reason)]])))
 
+(defn gyro []
+  (let [magneto (subscribe [:get-state :magneto])
+        disp (fn [axis] (-> @magneto axis (* 10) Math/round (/ 10)))]
+    (fn []
+      [view {:style {:flex-direction "column" :margin 20 :align-items "center"}}
+       [text {:style {:font-weight "bold"}}
+        "X: " (disp :x)]
+       [text {:style {:font-weight "bold"}}
+        "Y: " (disp :y)]
+       [text {:style {:font-weight "bold"}}
+        "Z: " (disp :z)]])))
+
 (defn wheels []
   (let [wheels-position     (subscribe [:wheels/position])
         wheels-raw-position (subscribe [:get-state :wheels :raw])
@@ -106,7 +118,7 @@
              :style  {:width 40 :height 40 :margin-bottom 20}}]
 
      [endpoint]
-     [throttle]
+     [gyro]
      [wheels]
      [view  {:style {:flex-direction "row"}}
       [touchable-highlight {:style {:background-color "#999" :padding 10 :border-radius 5}
