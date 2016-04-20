@@ -4,6 +4,7 @@
   (:require [reagent.core :as r :refer [atom]]
             [re-frame.core :refer [subscribe dispatch dispatch-sync]]
             [cljs.core.async :refer [<! timeout]]
+            [controller.android.gyro :as gyro]
             [controller.handlers]
             [controller.subs]
             [controller.wheels :as wheels]
@@ -135,8 +136,12 @@
       (<! (timeout 50)))
     (recur)))
 
+(defn hooks []
+  (gyro/hooks))
+
 (defn init []
   (dispatch-sync [:initialize-db])
   (loops)
+  (hooks)
   (dispatch [:init-websocket])
   (.registerComponent app-registry "Controller" #(r/reactify-component app-root)))

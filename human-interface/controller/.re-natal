@@ -3,8 +3,7 @@
   "interface": "reagent",
   "androidHost": "10.0.3.2",
   "modules": [
-    "react-native-slider",
-    "react-native-sensor-manager"
+    "react-native-slider"
   ],
   "imageDirs": [
     "images"
