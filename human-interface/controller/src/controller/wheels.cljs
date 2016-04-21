@@ -23,26 +23,25 @@
     {:raw begin-state
      :min min
      :max max
-     :zero begin-state
-     :reverse true}))
+     :zero begin-state}))
 
 ;;; SUBS
 
 (register-sub
- :wheels/position
- (fn [db _]
-   (reaction
-    (or (- (get-in @db [:wheels :raw])
-           (get-in @db [:wheels :zero]))))))
+  :wheels/position
+  (fn [db _]
+    (reaction
+      (or (- (get-in @db [:wheels :raw])
+             (get-in @db [:wheels :zero]))))))
 
 ;;; HANDLERS
 
 (register-handler
- :wheels/zero
- (fn [db _]
-   (assoc-in db [:wheels :zero] (-> db :wheels :raw))))
+  :wheels/zero
+  (fn [db _]
+    (assoc-in db [:wheels :zero] (-> db :wheels :raw))))
 
 (register-handler
- :wheels/update-raw
- (fn [db [_ raw]]
-   (assoc-in db [:wheels :raw] raw)))
+  :wheels/update-raw
+  (fn [db [_ raw]]
+    (assoc-in db [:wheels :raw] raw)))

@@ -2,7 +2,7 @@
   (:require-macros [cljs.core.async.macros :refer [go go-loop]])
   (:require [taoensso.timbre :refer-macros [info]]
             [re-frame.core :refer [dispatch]]
-            [cljs.core.async :as a :refer [<! >! chan mix timeout sliding-buffer]]))
+            [cljs.core.async :as a :refer [<! >! chan  timeout sliding-buffer]]))
 
 (def device-event-emitter (.-DeviceEventEmitter (js/require "react-native")))
 (def sensor-manager (.-SensorManager (js/require "NativeModules")))
@@ -30,6 +30,6 @@
 
     (go-loop []
       (let [m (<! magneto-chan)]
-        (dispatch [:set-state [:magneto] m])
+        (dispatch [:set-state [:drive :magneto] m])
         (<! (timeout 50))
         (recur)))))

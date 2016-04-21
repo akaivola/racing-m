@@ -9,11 +9,11 @@
    :max 2046})
 
 (register-handler
- :throttle/zero
- (fn [db _]
-   (assoc-in db [:throttle :speed] 1023)))
+  :throttle/zero
+  (fn [db _]
+    (assoc-in db [:throttle :speed] 1023)))
 
 (register-handler
- :throttle/set
- (fn [db [_ speed]]
-   (assoc-in db [:throttle :speed] speed)))
+  :throttle/set
+  (fn [db [_ speed]]
+    (assoc-in db [:throttle :speed] speed)))
