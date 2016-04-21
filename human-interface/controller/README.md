@@ -6,6 +6,8 @@ React Native UI for interfacing with a ESP8266 websocket server hidden in a plas
 
 # initial steps
 
+read: https://facebook.github.io/react-native/docs/running-on-device-android.html#content
+
 `re-natal upgrade`
 `re-natal deps`
 `re-natal use-android-device real`
