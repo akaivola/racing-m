@@ -56,15 +56,14 @@
        [text (str @reason)]])))
 
 (defn gyro []
-  (let [magneto (subscribe [:get-state :drive :magneto])
-        magneto-normal (subscribe [:get-state :drive :magneto-normal])
-        disp (fn [axis] (-> @magneto axis (* 10) Math/round (/ 10)))]
+  (let [throttles (drive/throttle-subscribe)
+        disp      (fn [axis] (-> @throttles axis (* 10) Math/round (/ 10)))]
     (fn []
       [view {:style {:flex-direction "column" :margin 20 :align-items "center"}}
        [text {:style {:font-weight "bold"}}
-        "Throttle (raw): " (disp :x)]
+        "Throttle (raw): " (disp :throttle)]
        [text {:style {:font-weight "bold"}}
-        "Wheels (raw): " (disp :y)]
+        "Wheels (raw): " (disp :wheels)]
        ])))
 
 (defn app-root []
@@ -80,8 +79,8 @@
                                        :padding 30
                                        :margin-right 50
                                        :border-radius 5}
-                            :on-press-in #(dispatch [:start-drive])
-                            :on-press-out #(dispatch [:stop-drive])}
+                            :on-press-in #(dispatch [:drive/start-drive])
+                            :on-press-out #(dispatch [:drive/stop-drive])}
        [text {:style {:text-align "center" :font-weight "bold"}}
         "Drive"]]
       [touchable-highlight {:style {:background-color "#999" :padding 10 :border-radius 5}

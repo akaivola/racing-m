@@ -4,6 +4,7 @@
     [schema.core :as s :include-macros true]
     [controller.wheels :as wheels]
     [controller.throttle :as throttle]
+    [controller.drive :as drive]
     [controller.db :refer [app-db schema]]
     [taoensso.timbre :refer-macros [spy info]]))
 
@@ -23,6 +24,7 @@
      app-db
      :wheels wheels/initial-state
      :throttle throttle/initial-state
+     :drive drive/initial-state
      :net {:endpoint "ws://192.168.8.102:8080"
            :open false
            :error nil

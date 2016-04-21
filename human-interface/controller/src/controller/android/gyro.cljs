@@ -1,8 +1,6 @@
 (ns controller.android.gyro
-  (:require-macros [cljs.core.async.macros :refer [go go-loop]])
   (:require [taoensso.timbre :refer-macros [info]]
-            [re-frame.core :refer [dispatch]]
-            [cljs.core.async :as a :refer [<! >! chan  timeout sliding-buffer]]))
+            [re-frame.core :refer [dispatch]]))
 
 (def device-event-emitter (.-DeviceEventEmitter (js/require "react-native")))
 (def sensor-manager (.-SensorManager (js/require "NativeModules")))
@@ -17,19 +15,11 @@
     (.addListener device-event-emitter "Magnetometer" listener)
     (.startMagnetometer sensor-manager millisec-delay)))
 
-(defn chan-listener []
-  (let [output (chan (sliding-buffer 1))]
-    [(fn [data]
-       (go (>! output (js->clj data :keywordize-keys true))))
-     output]))
+(defn dispatch-listener [data]
+  (dispatch [:set-state [:drive :magneto]
+             (js->clj data :keywordize-keys true)]))
 
 (defn hooks []
-  (let [[magneto-listener magneto-chan] (chan-listener)]
+  (do
     (info "Hook magnetometer")
-    (hook-magnetometer! 33 magneto-listener)
-
-    (go-loop []
-      (let [m (<! magneto-chan)]
-        (dispatch [:set-state [:drive :magneto] m])
-        (<! (timeout 50))
-        (recur)))))
+    (hook-magnetometer! 50 dispatch-listener)))
