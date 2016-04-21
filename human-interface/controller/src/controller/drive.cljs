@@ -10,15 +10,15 @@
    :magneto {:x 0
              :y 0
              :z 0}
-   :magneto-normal {:x 0
+   :magneto-zero {:x 0
                     :y 0
                     :z 0}})
 
 (defn throttle-subscribe []
   (let [throttle-raw (subscribe [:get-state :drive :magneto :x])
-        throttle-normal (subscribe [:get-state :drive :magneto-normal :x])
+        throttle-zero (subscribe [:get-state :drive :magneto-zero :x])
         wheels-raw (subscribe [:get-state :drive :magneto :y])
-        wheels-normal (subscribe [:get-state :drive :magneto-normal :y])]
+        wheels-zero (subscribe [:get-state :drive :magneto-zero :y])]
     (subscribe [:drive/throttles [throttle-raw throttle-zero wheels-raw wheels-zero]])))
 
 (defn raw->human [number]

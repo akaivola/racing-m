@@ -5,11 +5,12 @@
             [re-frame.core :refer [subscribe dispatch dispatch-sync]]
             [cljs.core.async :refer [<! timeout]]
             [controller.android.gyro :as gyro]
-            [controller.handlers]
-            [controller.subs]
-            [controller.wheels :as wheels]
-            [controller.throttle]
             [controller.comms :as comms]
+            [controller.handlers]
+            [controller.loops :as loops]
+            [controller.subs]
+            [controller.throttle]
+            [controller.wheels :as wheels]
             [taoensso.timbre :refer-macros [spy info warn debug]]))
 
 (set! js/React (js/require "react-native"))

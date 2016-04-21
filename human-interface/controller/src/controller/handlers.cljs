@@ -1,21 +1,11 @@
 (ns controller.handlers
   (:require
     [re-frame.core :refer [register-handler after subscribe dispatch dispatch-sync]]
-    [schema.core :as s :include-macros true]
     [controller.wheels :as wheels]
     [controller.throttle :as throttle]
     [controller.drive :as drive]
-    [controller.db :refer [app-db schema]]
+    [controller.db :refer [app-db]]
     [taoensso.timbre :refer-macros [spy info]]))
-
-(defn check-and-throw
-  "throw an exception if db doesn't match the schema."
-  [a-schema db]
-    (if-let [problems (s/check a-schema db)]
-      (throw (js/Error. (str "schema check failed: " problems)))))
-
-(def validate-schema-mw
-  (after (partial check-and-throw schema)))
 
 (register-handler
   :initialize-db

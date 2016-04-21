@@ -1,7 +1,13 @@
-(ns controller.loops)
+(ns controller.loops
+  (:require-macros
+   [cljs.core.async.macros :refer [go go-loop]])
+  (:require
+   [controller.comms :as comms]
+   [cljs.core.async :refer [<! timeout]]
+   [re-frame.core :refer [subscribe dispatch dispatch-sync]]
+   [taoensso.timbre :refer-macros [spy info warn debug]]))
 
 (defn loops []
-
   ; readystate polling
   (go-loop []
     (let [readystate (subscribe [:get-state :net :ready-state])]
