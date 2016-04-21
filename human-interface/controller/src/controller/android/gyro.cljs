@@ -1,6 +1,7 @@
 (ns controller.android.gyro
   (:require [taoensso.timbre :refer-macros [info]]
-            [re-frame.core :refer [dispatch]]))
+            [re-frame.core :refer [dispatch]]
+            [taoensso.timbre :refer-macros [spy]]))
 
 (def device-event-emitter (.-DeviceEventEmitter (js/require "react-native")))
 (def sensor-manager (.-SensorManager (js/require "NativeModules")))

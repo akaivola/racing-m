@@ -1,11 +1,13 @@
 (ns controller.android.core
   (:require-macros
-   [cljs.core.async.macros :refer [go go-loop]])
+   [cljs.core.async.macros :refer [go go-loop]]
+   [reagent.ratom :refer [reaction]])
   (:require [reagent.core :as r :refer [atom]]
             [re-frame.core :refer [subscribe dispatch dispatch-sync]]
             [cljs.core.async :refer [<! timeout]]
             [controller.android.gyro :as gyro]
             [controller.comms :as comms]
+            [controller.drive :as drive]
             [controller.handlers]
             [controller.loops :as loops]
             [controller.subs]
@@ -14,7 +16,6 @@
             [taoensso.timbre :refer-macros [spy info warn debug]]))
 
 (set! js/React (js/require "react-native"))
-
 (def app-registry (.-AppRegistry js/React))
 (def text (r/adapt-react-class (.-Text js/React)))
 (def input (r/adapt-react-class (.-TextInput js/React)))
@@ -29,7 +30,6 @@
 
 (defn endpoint []
   (let [endpoint (subscribe [:get-state :net :endpoint])
-        message (subscribe [:get-state :net :message])
         socket-open? (subscribe [:get-state :net :open])
         reason (subscribe [:get-state :net :close :reason])
         ready-state (subscribe [:get-state :net :ready-state])]
@@ -51,20 +51,22 @@
                                     (dispatch [:update-readystate]))}]
        [text
         "Opened: " (str @socket-open?)
-        " | Message: " (or (not-empty (str @message))
-                           "<none>")
         " | ready-state: " (name (or @ready-state :error))]
        [text (str @reason)]])))
 
 (defn gyro []
   (let [throttles (drive/throttle-subscribe)
-        disp      (fn [axis] (-> @throttles axis (* 10) Math/round (/ 10)))]
+        disp      (fn [axis] (-> @throttles axis (* 10) Math/round (/ 10)))
+        drive?    (subscribe [:get-state :drive :drive?])
+        drive-color (reaction (if @drive? "orange" "gray"))]
     (fn []
       [view {:style {:flex-direction "column" :margin 20 :align-items "center"}}
-       [text {:style {:font-weight "bold"}}
+       [text {:style {:font-weight "bold"
+                      :color @drive-color}}
         "Throttle (raw): " (disp :throttle)]
-       [text {:style {:font-weight "bold"}}
-        "Wheels (raw): " (disp :wheels)]
+       [text {:style {:font-weight "bold"
+                      :color @drive-color}}
+        "Throttle (machine): " (disp :machine-throttle)]
        ])))
 
 (defn app-root []

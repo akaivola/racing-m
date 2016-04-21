@@ -3,7 +3,7 @@
    [cljs.core.async.macros :refer [go go-loop]])
   (:require
    [controller.comms :as comms]
-   [cljs.core.async :refer [<! timeout]]
+   [cljs.core.async :refer [<! >! timeout]]
    [re-frame.core :refer [subscribe dispatch dispatch-sync]]
    [taoensso.timbre :refer-macros [spy info warn debug]]))
 
@@ -22,12 +22,16 @@
   ; throttled websocket messages
   (go-loop []
     (let [message (<! comms/messages)
-          ws      (subscribe [:get-state :net :ws])]
+          ready-state @(subscribe [:get-state :net :ready-state])
+          open?       @(subscribe [:get-state :net :open])
+          error?      @(subscribe [:get-state :net :error])
+          ws          @(subscribe [:get-state :net :ws])]
       (try
-        (some->> message
-                 (clj->js)
-                 (.stringify js/JSON)
-                 (.send @ws))
+        (when (and open? (not error?) (= :open ready-state) (some? ws))
+          (some->> message
+                   (clj->js)
+                   (.stringify js/JSON)
+                   (.send ws)))
         (catch :default e (warn e)))
       (<! (timeout 50)))
     (recur))
