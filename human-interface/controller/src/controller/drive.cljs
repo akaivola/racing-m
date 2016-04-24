@@ -19,7 +19,7 @@
 (defn throttle-subscribe []
   (let [throttle-raw (subscribe [:get-state :drive :magneto :z])
         throttle-zero (subscribe [:get-state :drive :magneto-zero :z])
-        wheels-raw (subscribe [:get-state :drive :magneto-zero :y])
+        wheels-raw (subscribe [:get-state :drive :magneto :y])
         wheels-zero (subscribe [:get-state :drive :magneto-zero :y])]
     (subscribe [:drive/throttles] [throttle-raw throttle-zero
                                    wheels-raw wheels-zero])))
@@ -33,7 +33,10 @@
 (register-sub
   :drive/throttles
   (fn [db _ [throttle-raw throttle-zero wheels-raw wheels-zero]]
-    (let [corrected-throttle (- throttle-raw throttle-zero)
+    (let [drive? (get-in @db [:drive :drive?])
+          wheel-midpoint   (get-in @db [:wheels :zero])
+          corrected-wheels (-> (- wheels-raw wheels-zero) (* -1))
+          corrected-throttle (- throttle-raw throttle-zero)
           machine-throttle (-> corrected-throttle
                                (Math/pow 2)
                                (* 4)
@@ -43,18 +46,21 @@
                                Math/floor
                                (+ 1023)
                                (max (get-in @db [:throttle :min]))
-                               (min (get-in @db [:throttle :max])))]
+                               (min (get-in @db [:throttle :max])))
+          machine-wheels (+ wheel-midpoint corrected-wheels)]
 
-      ; nasty side-effect
-      (comms/enqueue-message {:wheels 90
-                              :speed  (if (get-in @db [:drive :drive?])
+
+      (comms/enqueue-message {:wheels (if drive?
+                                        machine-wheels
+                                        wheel-midpoint)
+                              :speed  (if drive?
                                         machine-throttle
                                         1023)})
 
+
       (reaction
         {:throttle (raw->human corrected-throttle)
-         :wheels   (raw->human (- wheels-raw wheels-zero))
-         :machine-throttle machine-throttle}))))
+         :wheels   (raw->human corrected-wheels)}))))
 
 (register-handler
   :drive/start-drive

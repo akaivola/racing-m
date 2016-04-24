@@ -32,9 +32,21 @@
   (let [endpoint (subscribe [:get-state :net :endpoint])
         socket-open? (subscribe [:get-state :net :open])
         reason (subscribe [:get-state :net :close :reason])
-        ready-state (subscribe [:get-state :net :ready-state])]
+        ready-state (subscribe [:get-state :net :ready-state])
+        on-edit #(do (dispatch-sync [:update-state
+                                    (fn [state]
+                                      (-> (assoc-in state
+                                                    [:net :endpoint]
+                                                    (-> state :net :endpoint-edit))))])
+                    (dispatch [:init-websocket])
+                    (dispatch [:update-readystate]))]
     (fn []
       [view {:style {:flex-direction "column" :align-items "center"}}
+       [input {:style          {:height       10
+                                :border-color "gray"
+                                :border-width 1}
+               :placeholder    "foo"
+               :keyboard-type  "url"}]
        [input {:style {:height 40
                        :border-color "gray"
                        :border-width 1}
@@ -42,31 +54,25 @@
                :placeholder "NodeMCU endpoint"
                :keyboard-type "url"
                :on-change-text #(dispatch-sync [:set-state [:net :endpoint-edit] (or % @endpoint)])
-               :on-end-editing #(do (dispatch-sync [:update-state
-                                                    (fn [state]
-                                                      (-> (assoc-in state
-                                                                    [:net :endpoint]
-                                                                    (-> state :net :endpoint-edit))))])
-                                    (dispatch [:init-websocket])
-                                    (dispatch [:update-readystate]))}]
+               :on-end-editing on-edit}]
        [text
         "Opened: " (str @socket-open?)
         " | ready-state: " (name (or @ready-state :error))]
        [text (str @reason)]])))
 
+
 (defn gyro []
   (let [throttles (drive/throttle-subscribe)
-        disp      (fn [axis] (-> @throttles axis (* 10) Math/round (/ 10)))
         drive?    (subscribe [:get-state :drive :drive?])
         drive-color (reaction (if @drive? "orange" "gray"))]
     (fn []
       [view {:style {:flex-direction "column" :margin 20 :align-items "center"}}
        [text {:style {:font-weight "bold"
                       :color @drive-color}}
-        "Throttle (raw): " (disp :throttle)]
+        "Throttle (raw): " (:throttle @throttles)]
        [text {:style {:font-weight "bold"
-                      :color @drive-color}}
-        "Throttle (machine): " (disp :machine-throttle)]
+                      :color       @drive-color}}
+        "Wheels (raw): " (:wheels @throttles)]
        ])))
 
 (defn app-root []
