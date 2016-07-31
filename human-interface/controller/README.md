@@ -10,20 +10,19 @@ read: https://facebook.github.io/react-native/docs/running-on-device-android.htm
 
 `re-natal upgrade`
 `re-natal deps`
-`re-natal use-android-device real`
+`re-natal use-android-device real` # or genymotion
 
 # when nothing works
 
 `rm -rf android/build\
   android/app/build \
   node_modules/react-native-sensor-manager/android/build`
-`re-natal use-figwheel`
 
 Run steps below
 
 # figwheel
 
-`re-natal use figwheel`
+`re-natal use-figwheel`
 `lein figwheel android`
 
 .. new terminal ..
@@ -32,8 +31,8 @@ Run steps below
 
 # Logging:
 
-`adb reverse tcp:3449 tcp:3449`
-`adb reverse tcp:8081 tcp:8081`
+`adb reverse tcp:3449 tcp:3449` # only when using real device
+`adb reverse tcp:8081 tcp:8081` # only when using real device
 `adb logcat ReactNativeJS:I \*:S`
 
 
