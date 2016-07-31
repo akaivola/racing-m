@@ -30,11 +30,12 @@
         (let [ready-state @(subscribe [:get-state :net :ready-state])
               open?       @(subscribe [:get-state :net :open])
               error?      @(subscribe [:get-state :net :error])
-              ws          @(subscribe [:get-state :net :ws])]
+              ws          @(subscribe [:get-state :net :ws])
+              wheels      @(subscribe [:get-state :wheels :raw])]
           (try
             (when (and open? (not error?) (= :open ready-state) (some? ws))
-              (some->> (spy (dissoc message :sending?))
-                       (merge {:wheels 110})
+              (some->> (dissoc message :sending?)
+                       (merge {:wheels @wheels})
                        (clj->js)
                        (.stringify js/JSON)
                        (.send ws)))

@@ -45,5 +45,4 @@
 (register-handler
   :wheels/update-raw
   (fn [db [_ raw]]
-    (comms/enqueue-message {:wheels raw})
     (assoc-in db [:wheels :raw] raw)))
