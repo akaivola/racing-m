@@ -1,9 +1,11 @@
 (ns controller.comms
-  (:require-macros [cljs.core.async.macros :refer [go go-loop]])
-  (:require [cljs.core.async :refer [>! chan sliding-buffer]]
-            [taoensso.timbre :refer-macros [spy info debug]]))
+  (:require [taoensso.timbre :refer-macros [spy info debug]]))
 
-(defonce messages (chan (sliding-buffer 1)))
+(def message (atom nil))
 
-(defn enqueue-message [message]
-  (go (>! messages message)))
+(defn enqueue-message [new-message]
+  (swap! message
+    (fn [m]
+      (if-let [sending? (:sending? m)]
+        new-message ; replace entire message
+        (merge m new-message))))) ; merge with not-yet-sent message

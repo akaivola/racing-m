@@ -11,15 +11,15 @@
 
 (register-sub
   :send-websocket
-  (fn [db [_] [wheels-position speed]]
+  (fn [db [_] [wheels-position]]
     (do
       (let [open?       (get-in @db [:net :open])
             error?      (get-in @db [:net :error])
             ws          (get-in @db [:net :ws])
             ready-state (get-in @db [:net :ready-state])]
-        (if (and open? (not error?) (some? ws) (= :open ready-state))
-          (do
-            (comms/enqueue-message {:wheels wheels-position
-                                    :speed  speed})
-            (reaction true))
-          (reaction false))))))
+        (reaction
+          (boolean
+            (when (and open? (not error?) (some? ws) (= :open ready-state))
+              (do
+                (comms/enqueue-message {:wheels wheels-position})
+                true))))))))

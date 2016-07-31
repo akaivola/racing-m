@@ -21,19 +21,24 @@
 
   ; throttled websocket messages
   (go-loop []
-    (let [message (<! comms/messages)
-          ready-state @(subscribe [:get-state :net :ready-state])
-          open?       @(subscribe [:get-state :net :open])
-          error?      @(subscribe [:get-state :net :error])
-          ws          @(subscribe [:get-state :net :ws])]
-      (try
-        (when (and open? (not error?) (= :open ready-state) (some? ws))
-          (some->> message
-                   (clj->js)
-                   (.stringify js/JSON)
-                   (.send ws)))
-        (catch :default e (warn e)))
-      (<! (timeout 50)))
-    (recur))
+    (do
+      (when-let [message (swap! comms/message
+                                (fn [message]
+                                  (if-let [sending? (:sending? message)]
+                                    nil
+                                    (assoc message :sending? true))))]
+        (let [ready-state @(subscribe [:get-state :net :ready-state])
+              open?       @(subscribe [:get-state :net :open])
+              error?      @(subscribe [:get-state :net :error])
+              ws          @(subscribe [:get-state :net :ws])]
+          (try
+            (when (and open? (not error?) (= :open ready-state) (some? ws))
+              (some->> (dissoc message :sending?)
+                       (clj->js)
+                       (.stringify js/JSON)
+                       (.send ws)))
+            (catch :default e (warn e)))))
+      (<! (timeout 50))
+      (recur)))
 
   )

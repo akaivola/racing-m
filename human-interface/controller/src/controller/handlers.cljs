@@ -1,10 +1,11 @@
 (ns controller.handlers
   (:require
     [re-frame.core :refer [register-handler after subscribe dispatch dispatch-sync]]
-    [controller.wheels :as wheels]
-    [controller.throttle :as throttle]
-    [controller.drive :as drive]
+    [controller.comms :as comms]
     [controller.db :refer [app-db]]
+    [controller.drive :as drive]
+    [controller.throttle :as throttle]
+    [controller.wheels :as wheels]
     [taoensso.timbre :refer-macros [spy info]]))
 
 (register-handler
