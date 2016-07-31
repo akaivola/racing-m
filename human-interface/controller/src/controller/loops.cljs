@@ -33,7 +33,8 @@
               ws          @(subscribe [:get-state :net :ws])]
           (try
             (when (and open? (not error?) (= :open ready-state) (some? ws))
-              (some->> (dissoc message :sending?)
+              (some->> (spy (dissoc message :sending?))
+                       (merge {:wheels 110})
                        (clj->js)
                        (.stringify js/JSON)
                        (.send ws)))

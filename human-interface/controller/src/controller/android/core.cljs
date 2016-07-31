@@ -24,6 +24,7 @@
 (def touchable-highlight (r/adapt-react-class (.-TouchableHighlight js/React)))
 
 (def logo-img (js/require "./images/cljs.png"))
+(def slider (r/adapt-react-class (js/require "react-native-slider")))
 
 (defn alert [title]
   (.alert (.-Alert js/React) title))
@@ -62,18 +63,34 @@
 
 
 (defn gyro []
-  (let [throttles (drive/throttle-subscribe)
-        drive?    (subscribe [:get-state :drive :drive?])
-        drive-color (reaction (if @drive? "orange" "gray"))]
+  (let [throttles    (drive/throttle-subscribe)
+        wheels-raw   (subscribe [:get-state :wheels :raw])
+        wheels-zero  (subscribe [:get-state :wheels :zero])
+        wheels-human (reaction (* -1 (- @wheels-raw @wheels-zero)))
+        drive?       (subscribe [:get-state :drive :drive?])
+        drive-color  (reaction (if @drive? "orange" "gray"))]
     (fn []
       [view {:style {:flex-direction "column" :margin 20 :align-items "center"}}
        [text {:style {:font-weight "bold"
                       :color @drive-color}}
         "Throttle (raw): " (:throttle @throttles)]
        [text {:style {:font-weight "bold"
-                      :color       @drive-color}}
-        "Wheels (raw): " (:wheels @throttles)]
-       ])))
+                      :color @drive-color}}
+        "Wheels: " @wheels-human]])))
+
+(defn wheel-slider []
+  (let [min (subscribe [:get-state :wheels :min])
+        max (subscribe [:get-state :wheels :max])
+        raw (subscribe [:get-state :wheels :raw])]
+    (fn []
+      [slider {:style           {:width  240
+                                 :height 30
+                                 :margin 10}
+               :minimum-value   @min
+               :maximum-value   @max
+               :on-value-change #(dispatch-sync [:wheels/update-raw (Math/floor %)])
+               :step            1
+               :value           @raw}])))
 
 (defn app-root []
   (fn []
@@ -95,7 +112,8 @@
       [touchable-highlight {:style {:background-color "#999" :padding 10 :border-radius 5}
                             :on-press #(dispatch-sync [:init-websocket])}
        [text {:style {:text-align "center" :font-weight "bold"}}
-        "Reconnect"]]]]))
+        "Reconnect"]]]
+     [wheel-slider]]))
 
 
 

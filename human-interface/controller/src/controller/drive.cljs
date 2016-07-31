@@ -17,12 +17,9 @@
                   :z 0}})
 
 (defn throttle-subscribe []
-  (let [throttle-raw (subscribe [:get-state :drive :magneto :z])
-        throttle-zero (subscribe [:get-state :drive :magneto-zero :z])
-        wheels-raw (subscribe [:get-state :drive :magneto :y])
-        wheels-zero (subscribe [:get-state :drive :magneto-zero :y])]
-    (subscribe [:drive/throttles] [throttle-raw throttle-zero
-                                   wheels-raw wheels-zero])))
+  (let [throttle-raw  (subscribe [:get-state :drive :magneto :z])
+        throttle-zero (subscribe [:get-state :drive :magneto-zero :z])]
+    (subscribe [:drive/throttles] [throttle-raw throttle-zero])))
 
 (defn- raw->human [number]
   (-> number
@@ -32,35 +29,28 @@
 
 (register-sub
   :drive/throttles
-  (fn [db _ [throttle-raw throttle-zero wheels-raw wheels-zero]]
-    (let [drive? (get-in @db [:drive :drive?])
-          wheel-midpoint   (get-in @db [:wheels :zero])
-          corrected-wheels (-> (- wheels-raw wheels-zero) (* -1))
+  (fn [db _ [throttle-raw throttle-zero]]
+    (let [drive?             (get-in @db [:drive :drive?])
           corrected-throttle (- throttle-raw throttle-zero)
-          machine-throttle (-> corrected-throttle
-                               (Math/pow 2)
-                               (* 4)
-                               (* (if (pos? corrected-throttle)
-                                    -1
-                                    1))
-                               Math/floor
-                               (+ 1023)
-                               (max (get-in @db [:throttle :min]))
-                               (min (get-in @db [:throttle :max])))
-          machine-wheels (+ wheel-midpoint corrected-wheels)]
+          machine-throttle   (-> corrected-throttle
+                                 (Math/pow 2)
+                                 (* 4)
+                                 (* (if (pos? corrected-throttle)
+                                      -1
+                                      1))
+                                 Math/floor
+                                 (+ 1023)
+                                 (max (get-in @db [:throttle :min]))
+                                 (min (get-in @db [:throttle :max])))]
 
 
-      (comms/enqueue-message {:wheels (if drive?
-                                        machine-wheels
-                                        wheel-midpoint)
-                              :speed  (if drive?
+      (comms/enqueue-message {:speed  (if drive?
                                         machine-throttle
                                         1023)})
 
 
       (reaction
-        {:throttle (raw->human corrected-throttle)
-         :wheels   (raw->human corrected-wheels)}))))
+        {:throttle (raw->human corrected-throttle)}))))
 
 (register-handler
   :drive/start-drive

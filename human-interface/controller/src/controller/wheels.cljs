@@ -1,6 +1,7 @@
 (ns controller.wheels
   (:require-macros [reagent.ratom :refer [reaction]])
   (:require [re-frame.core :refer [register-sub register-handler]]
+            [controller.comms :as comms]
             [schema.core :as s :include-macros true]
             [taoensso.timbre :refer-macros [spy]]))
 
@@ -44,4 +45,5 @@
 (register-handler
   :wheels/update-raw
   (fn [db [_ raw]]
+    (comms/enqueue-message {:wheels raw})
     (assoc-in db [:wheels :raw] raw)))
