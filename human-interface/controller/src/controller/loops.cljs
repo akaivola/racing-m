@@ -35,7 +35,7 @@
           (try
             (when (and open? (not error?) (= :open ready-state) (some? ws))
               (some->> (dissoc message :sending?)
-                       (merge {:wheels @wheels})
+                       (merge {:wheels wheels})
                        (clj->js)
                        (.stringify js/JSON)
                        (.send ws)))
