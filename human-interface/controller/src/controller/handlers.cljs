@@ -16,7 +16,7 @@
      :wheels wheels/initial-state
      :throttle throttle/initial-state
      :drive drive/initial-state
-     :net {:endpoint "ws://192.168.8.102:8080"
+     :net {:endpoint "ws://192.168.4.1:8080"
            :open false
            :error nil
            :message nil

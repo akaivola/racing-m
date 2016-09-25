@@ -11,13 +11,7 @@ const char* password = "FJ320M36723";
 WebSocket* ws;
 
 void setupOTA() {
-  WiFi.mode(WIFI_STA);
-  WiFi.begin(ssid, password);
-  while (WiFi.waitForConnectResult() != WL_CONNECTED) {
-    Serial.println("Connection Failed! Rebooting...");
-    delay(5000);
-    ESP.restart();
-  }
+  WiFi.softAP("racing-m", "12345678");
 
   // Port defaults to 8266
   // ArduinoOTA.setPort(8266);
