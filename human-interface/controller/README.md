@@ -35,6 +35,12 @@ Run steps below
 `adb reverse tcp:8081 tcp:8081` # only when using real device
 `adb logcat ReactNativeJS:I \*:S`
 
+# Production build
+
+`lein prod-build`
+
+`cd android && ./gradlew assembleRelease`
+
 
 ## License
 ```
